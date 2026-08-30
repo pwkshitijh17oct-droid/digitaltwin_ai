@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import pandas as pd
+import importlib.util
 
 # Add simulator directory to sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,6 +19,36 @@ if str(SIMULATOR_DIR) not in sys.path:
     sys.path.insert(0, str(SIMULATOR_DIR))
 
 from simulation_controller import IntegratedSimulationController
+
+# Load bottleneck ML inference layer
+ML_INFERENCE_PATH = (
+    BASE_DIR
+    / "ml-files"
+    / "inference"
+    / "bottleneck_inference.py"
+)
+
+_ml_spec = importlib.util.spec_from_file_location(
+    "bottleneck_inference",
+    ML_INFERENCE_PATH,
+)
+
+_ml_module = importlib.util.module_from_spec(_ml_spec)
+_ml_spec.loader.exec_module(_ml_module)
+
+BottleneckInference = _ml_module.BottleneckInference
+
+_ML_INFERENCE: Optional[BottleneckInference] = None
+
+
+def get_bottleneck_ml() -> BottleneckInference:
+    """Retrieve the singleton bottleneck ML inference engine."""
+    global _ML_INFERENCE
+
+    if _ML_INFERENCE is None:
+        _ML_INFERENCE = BottleneckInference()
+
+    return _ML_INFERENCE
 
 _CONTROLLER_INSTANCE: Optional[IntegratedSimulationController] = None
 
@@ -297,34 +328,121 @@ def get_sensor_parameters(station_id: str) -> Dict[str, Any]:
     }
 
 def get_bottleneck_intelligence() -> Dict[str, Any]:
+    """
+    Return bottleneck intelligence using:
+    - analytical pressure score for current/ranking context
+    - station-specific ML model for future bottleneck prediction
+    """
     ctrl = get_simulator_controller()
     state = ctrl.get_state()
     stations = get_all_stations_data()
-    
-    # Calculate pressure scores
-    takt = state.get("line_takt_min", 10.0)
-    for s in stations:
-        ct = s["current_cycle_time"]
-        ct_ratio = ct / max(takt, 0.1)
-        q_ratio = s["queue_length"] / max(s["queue_capacity"], 1)
-        
-        pressure = (ct_ratio * 40.0) + (q_ratio * 40.0) + ((1.0 - (s["equipment_health"])) * 20.0)
-        if s["status"] == "BLOCKED":
-            pressure += 25.0
-        elif s["status"] == "RECOVERY":
-            pressure += 15.0
-        s["pressure_score"] = round(pressure, 1)
 
-    ranked = sorted(stations, key=lambda x: x["pressure_score"], reverse=True)
-    
-    current_b = ranked[0] if ranked else None
-    predicted_b = ranked[1] if len(ranked) > 1 else None
-    
+    # ---------------------------------------------------------
+    # Analytical pressure score
+    # ---------------------------------------------------------
+    takt = state.get("line_takt_min", 10.0)
+
+    for s in stations:
+        ct = float(s.get("current_cycle_time", 0.0) or 0.0)
+        q_len = float(s.get("queue_length", 0.0) or 0.0)
+        q_cap = float(s.get("queue_capacity", 10.0) or 10.0)
+        health = float(s.get("equipment_health", 1.0) or 1.0)
+
+        ct_ratio = ct / max(takt, 0.1)
+        q_ratio = q_len / max(q_cap, 1.0)
+
+        state_penalty = 0.0
+
+        if s.get("status") == "BLOCKED":
+            state_penalty += 20.0
+        elif s.get("status") == "STARVED":
+            state_penalty += 5.0
+
+        s["pressure_score"] = round(
+            (ct_ratio * 40.0)
+            + (q_ratio * 40.0)
+            + ((1.0 - health) * 20.0)
+            + state_penalty,
+            3,
+        )
+
+    # ---------------------------------------------------------
+    # Current bottleneck = highest analytical pressure
+    # ---------------------------------------------------------
+    rankings = sorted(
+        stations,
+        key=lambda x: x["pressure_score"],
+        reverse=True,
+    )
+
+    current_bottleneck = rankings[0] if rankings else None
+
+    # ---------------------------------------------------------
+    # ML future bottleneck prediction
+    # ---------------------------------------------------------
+    ml = get_bottleneck_ml()
+
+    predicted_candidates = []
+
+    # Use latest telemetry record available for each station.
+    for station in stations:
+        station_id = station["id"]
+
+        if station_id not in ml.models:
+            continue
+
+        station_records = [
+            record
+            for record in ctrl.telemetry
+            if record.get("station_id") == station_id
+        ]
+
+        if not station_records:
+            continue
+
+        latest_record = station_records[-1]
+
+        try:
+            prediction = ml.predict(latest_record)
+        except Exception:
+            continue
+
+        if prediction["predicted_bottleneck"]:
+            candidate = dict(station)
+
+            candidate["ml_probability"] = round(
+                prediction["probability"],
+                4,
+            )
+
+            candidate["ml_threshold"] = round(
+                prediction["threshold"],
+                4,
+            )
+
+            candidate["prediction_horizon_cycles"] = (
+                prediction["horizon_cycles"]
+            )
+
+            predicted_candidates.append(candidate)
+
+    # Highest ML probability becomes the predicted bottleneck.
+    predicted_bottleneck = None
+
+    if predicted_candidates:
+        predicted_bottleneck = max(
+            predicted_candidates,
+            key=lambda x: x["ml_probability"],
+        )
+
+    # ---------------------------------------------------------
+    # Return structure expected by bottleneck.py
+    # ---------------------------------------------------------
     return {
-        "current_bottleneck": current_b,
-        "predicted_bottleneck": predicted_b,
-        "rankings": ranked,
-        "line_takt": takt
+        "current_bottleneck": current_bottleneck,
+        "predicted_bottleneck": predicted_bottleneck,
+        "rankings": rankings,
+        "line_takt": round(float(takt), 3),
     }
 
 def get_quality_intelligence() -> Dict[str, Any]:
