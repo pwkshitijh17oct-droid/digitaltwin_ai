@@ -314,11 +314,14 @@ class IntegratedSimulationController:
 
 
 def live_terminal():
+    import random
+
+    dynamic_seed = random.randint(1, 999999999)  # Generate a new seed every run
 
     controller = IntegratedSimulationController(
         speed=8760.0,
         max_telemetry_records=10000,
-        seed=42,
+        seed=dynamic_seed,
         enable_phase7=True,
     )
 
