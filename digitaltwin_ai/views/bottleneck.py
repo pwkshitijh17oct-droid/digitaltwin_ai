@@ -1,149 +1,171 @@
 """
-Page 2 — Bottleneck Intelligence.
-Shows where bottlenecks are occurring and where they are predicted to occur.
+DIGITALTWIN.AI — Bottleneck Intelligence Page
+Identifies real-time constraints, bottleneck rankings, and trend-based projections.
 """
 
 import streamlit as st
-from data.data_adapter import get_bottleneck_predictions, get_analytics_data
+import data.adapter as adapter
 from components.charts import (
-    create_cycle_time_trend_chart, 
-    create_queue_growth_chart, 
-    create_bottleneck_ranking_bar
+    build_cycle_time_chart,
+    build_queue_accumulation_chart,
+    build_bottleneck_ranking_chart
 )
 
 def render_bottleneck_page():
-    """Render Bottleneck Intelligence dashboard."""
-    st.markdown("""
-    <div style="margin-bottom: 16px;">
-        <h2 style="font-size: 20px; font-weight: 800; color: #F8FAFC; margin: 0; letter-spacing: 0.02em;">
-            ⚠ Bottleneck Intelligence
-        </h2>
-        <div style="font-size: 12px; color: #94A3B8; margin-top: 2px;">
-            Real-time constraint detection & predictive cycle-time degradation modeling
+    st.markdown(
+        """
+        <div style="margin-bottom:14px; border-bottom:1px solid #1E293B; padding-bottom:10px;">
+            <h1 style="font-size:22px; font-weight:800; color:#F8FAFC; margin:0;">⚠ Bottleneck Intelligence</h1>
+            <div style="font-size:12px; color:#94A3B8;">Real-time line constraint tracking, pressure rankings & analytical projections</div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    b_data = get_bottleneck_predictions()
-    curr_b = b_data["current_bottleneck"]
-    pred_b = b_data["predicted_bottleneck"]
-    
-    # Top 2 Sections: Current Bottleneck & Predicted Bottleneck
-    col_curr, col_pred = st.columns(2)
-    
-    with col_curr:
-        status_color = "#EF4444" if curr_b["status"] == "CRITICAL" else "#F59E0B"
-        st.markdown(f"""
-        <div class="kpi-card critical" style="min-height: 190px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                <div class="kpi-label" style="color: #F87171;">CURRENT BOTTLENECK</div>
-                <span class="status-pill critical" style="background: rgba(239, 68, 68, 0.2); color: #EF4444; border-color: rgba(239, 68, 68, 0.4);">
-                    {curr_b['risk_level']} ({curr_b['risk_score']}%)
-                </span>
-            </div>
-            <div style="font-size: 18px; font-weight: 800; color: #FFFFFF; font-family: 'JetBrains Mono', monospace;">
-                {curr_b['id']} — {curr_b['name']}
-            </div>
-            
-            <div class="metric-grid" style="margin-top: 12px; margin-bottom: 0;">
-                <div class="metric-box">
-                    <div class="metric-box-label">Cycle Time</div>
-                    <div class="metric-box-val" style="color: #EF4444;">{curr_b['cycle_time']} <span style="font-size: 10px; color: #64748B;">min (+{curr_b['cycle_time_dev']}%)</span></div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-box-label">Queue Accumulation</div>
-                    <div class="metric-box-val">{curr_b['queue_length']} <span style="font-size: 10px; color: #64748B;">units</span></div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-box-label">Station Utilization</div>
-                    <div class="metric-box-val">{curr_b['utilization']}%</div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-box-label">Impact</div>
-                    <div class="metric-box-val" style="color: #F59E0B; font-size: 12px;">LINE PACING REDUCED</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with col_pred:
-        st.markdown(f"""
-        <div class="kpi-card warning" style="min-height: 190px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                <div class="kpi-label" style="color: #FBBF24;">PREDICTED FUTURE BOTTLENECK</div>
-                <span class="status-pill paused" style="background: rgba(245, 158, 11, 0.2); color: #F59E0B; border-color: rgba(245, 158, 11, 0.4);">
-                    {pred_b['risk_level']} ({pred_b['risk_score']}%)
-                </span>
-            </div>
-            <div style="font-size: 18px; font-weight: 800; color: #FFFFFF; font-family: 'JetBrains Mono', monospace;">
-                {pred_b['id']} — {pred_b['name']}
-            </div>
-            
-            <div class="metric-grid" style="margin-top: 12px; margin-bottom: 0;">
-                <div class="metric-box">
-                    <div class="metric-box-label">Time to Critical</div>
-                    <div class="metric-box-val" style="color: #F59E0B;">{pred_b['predicted_time']}</div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-box-label">Forecast Cycle Time</div>
-                    <div class="metric-box-val">{pred_b['cycle_time']} <span style="font-size: 10px; color: #64748B;">min</span></div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-box-label">Buffer Queue</div>
-                    <div class="metric-box-val">{pred_b['queue_length']} <span style="font-size: 10px; color: #64748B;">units</span></div>
-                </div>
-                <div class="metric-box">
-                    <div class="metric-box-label">Proactive Action</div>
-                    <div class="metric-box-val" style="color: #38BDF8; font-size: 12px;">PRE-VENT OVEN ZONE 2</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True
+    )
 
-    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
-    
-    # Third & Fourth Sections: Cycle Time Trend and Queue Growth
-    analytics_data = get_analytics_data()
-    ts = analytics_data["timestamps"]
-    s25_cts = analytics_data["cycle_times"]["S25"]
-    s18_cts = analytics_data["cycle_times"]["S18"]
-    s5_cts = analytics_data["cycle_times"]["S5"]
-    s25_qs = analytics_data["queues"]["S25"]
-    s18_qs = analytics_data["queues"]["S18"]
-    
-    col_ct, col_q = st.columns(2)
-    with col_ct:
-        fig_ct = create_cycle_time_trend_chart(ts, s25_cts, s18_cts, s5_cts)
-        st.plotly_chart(fig_ct, use_container_width=True, config={"displayModeBar": False})
-        
-    with col_q:
-        fig_q = create_queue_growth_chart(ts, s25_qs, s18_qs)
-        st.plotly_chart(fig_q, use_container_width=True, config={"displayModeBar": False})
+    intel = adapter.get_bottleneck_intelligence()
+    current_b = intel["current_bottleneck"]
+    predicted_b = intel["predicted_bottleneck"]
+    rankings = intel["rankings"]
+    takt = intel["line_takt"]
+    stations = adapter.get_all_stations_data()
 
-    # Fifth Section: Bottleneck Ranking
-    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 13px; font-weight: 700; color: #F8FAFC; text-transform: uppercase; letter-spacing: 0.08em; font-family: monospace;'>Station Bottleneck Risk Ranking</p>", unsafe_allow_html=True)
-    
-    col_rank_chart, col_rank_table = st.columns([1, 1])
-    
-    with col_rank_chart:
-        fig_bar = create_bottleneck_ranking_bar(b_data["rankings"])
-        st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
-        
-    with col_rank_table:
-        for r in b_data["rankings"]:
-            r_color = "#EF4444" if r["risk_level"] == "CRITICAL" else ("#F59E0B" if r["risk_level"] == "WARNING" else "#10B981")
-            st.markdown(f"""
-            <div style="background: #121824; border: 1px solid #1E293B; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 12px; font-weight: 800; font-family: monospace; color: #64748B;">#{r['rank']}</span>
-                    <div>
-                        <div style="font-size: 13px; font-weight: 700; color: #F8FAFC; font-family: monospace;">{r['id']} — {r['name']}</div>
-                        <div style="font-size: 10px; color: #64748B;">Shop: {r['shop']} | CT: {r['cycle_time']}m | Queue: {r['queue_length']}</div>
+    # Current Bottleneck Highlight
+    col1, col2 = st.columns(2)
+    with col1:
+        if current_b:
+            cb_id = current_b["id"]
+            cb_name = current_b["name"]
+            cb_status = current_b["status"]
+            cb_ct = current_b["current_cycle_time"]
+            cb_q = current_b["queue_length"]
+            cb_cap = current_b["queue_capacity"]
+            cb_score = current_b["pressure_score"]
+
+            st.markdown(
+                f"""
+                <div style="background:#121824; border:1px solid #EF4444; border-left:4px solid #EF4444; border-radius:8px; padding:16px;">
+                    <div style="font-size:11px; font-weight:700; color:#EF4444; text-transform:uppercase;">PRIMARY CURRENT BOTTLENECK</div>
+                    <div style="font-size:20px; font-weight:800; color:#F8FAFC; font-family:'JetBrains Mono'; margin-top:2px;">
+                        {cb_id} — {cb_name}
+                    </div>
+                    <div style="display:flex; gap:16px; margin-top:10px;">
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">STATE</div>
+                            <div style="font-size:13px; font-weight:700; color:#EF4444; font-family:'JetBrains Mono';">{cb_status}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">CYCLE TIME</div>
+                            <div style="font-size:13px; font-weight:700; color:#F8FAFC; font-family:'JetBrains Mono';">{cb_ct} min</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">LINE TAKT</div>
+                            <div style="font-size:13px; font-weight:700; color:#38BDF8; font-family:'JetBrains Mono';">{takt} min</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">QUEUE</div>
+                            <div style="font-size:13px; font-weight:700; color:#F59E0B; font-family:'JetBrains Mono';">{cb_q} / {cb_cap}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">PRESSURE</div>
+                            <div style="font-size:13px; font-weight:700; color:#EF4444; font-family:'JetBrains Mono';">{cb_score}</div>
+                        </div>
                     </div>
                 </div>
-                <span style="background: {r_color}22; color: {r_color}; border: 1px solid {r_color}66; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; font-family: monospace;">
-                    {r['risk_score']}% ({r['risk_level']})
-                </span>
-            </div>
-            """, unsafe_allow_html=True)
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            st.info("No active bottleneck detected. Line operating at nominal pace.")
+
+    with col2:
+        if predicted_b:
+            pb_id = predicted_b["id"]
+            pb_name = predicted_b["name"]
+            pb_status = predicted_b["status"]
+            pb_ct = predicted_b["current_cycle_time"]
+            pb_q = predicted_b["queue_length"]
+            pb_score = predicted_b["pressure_score"]
+
+            st.markdown(
+                f"""
+                <div style="background:#121824; border:1px solid #F59E0B; border-left:4px solid #F59E0B; border-radius:8px; padding:16px;">
+                    <div style="font-size:11px; font-weight:700; color:#F59E0B; text-transform:uppercase;">TREND-BASED PROJECTION (SECONDARY CONSTRAINT)</div>
+                    <div style="font-size:20px; font-weight:800; color:#F8FAFC; font-family:'JetBrains Mono'; margin-top:2px;">
+                        {pb_id} — {pb_name}
+                    </div>
+                    <div style="display:flex; gap:16px; margin-top:10px;">
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">STATE</div>
+                            <div style="font-size:13px; font-weight:700; color:#F59E0B; font-family:'JetBrains Mono';">{pb_status}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">CYCLE TIME</div>
+                            <div style="font-size:13px; font-weight:700; color:#F8FAFC; font-family:'JetBrains Mono';">{pb_ct} min</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">QUEUE</div>
+                            <div style="font-size:13px; font-weight:700; color:#F59E0B; font-family:'JetBrains Mono';">{pb_q} units</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#64748B;">PRESSURE</div>
+                            <div style="font-size:13px; font-weight:700; color:#F59E0B; font-family:'JetBrains Mono';">{pb_score}</div>
+                        </div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+
+    # Plotly Trend Visualizations
+    chart_col1, chart_col2 = st.columns(2)
+    with chart_col1:
+        fig_ct = build_cycle_time_chart(stations, takt)
+        st.plotly_chart(fig_ct, use_container_width=True)
+
+    with chart_col2:
+        fig_q = build_queue_accumulation_chart(stations)
+        st.plotly_chart(fig_q, use_container_width=True)
+
+    st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+
+    # Pressure Rankings & Ranking Chart
+    rcol1, rcol2 = st.columns([1, 1])
+    with rcol1:
+        fig_rank = build_bottleneck_ranking_chart(rankings)
+        st.plotly_chart(fig_rank, use_container_width=True)
+
+    with rcol2:
+        st.markdown("<div style='font-size:14px; font-weight:700; color:#F8FAFC; margin-bottom:8px;'>Station Pressure Table</div>", unsafe_allow_html=True)
+        
+        table_data = []
+        for idx, s in enumerate(rankings[:8], 1):
+            table_data.append({
+                "Rank": f"#{idx}",
+                "Station": s["id"],
+                "Name": s["name"],
+                "Shop": s["shop"],
+                "State": s["status"],
+                "CT (min)": s["current_cycle_time"],
+                "Queue": f"{s['queue_length']}/{s['queue_capacity']}",
+                "Pressure Score": s["pressure_score"]
+            })
+            
+        st.dataframe(
+            table_data,
+            hide_index=True,
+            use_container_width=True
+        )
+
+    # Analytical Methodology Note
+    st.markdown(
+        """
+        <div style="background:#0B0E14; border:1px solid #1E293B; border-radius:6px; padding:12px; margin-top:16px; font-size:11px; color:#94A3B8;">
+            <b>Methodology Note:</b> Bottleneck Pressure Score is calculated analytically from actual simulator parameters:
+            <br><code>Score = (CT / Line Takt) × 40 + (Queue / Capacity) × 40 + (1.0 - Equipment Health) × 20 + State Penalties</code>
+            <br><i>(This is an empirical trend-based projection. Future station-specific ML models can be seamlessly plugged into this data layer).</i>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )

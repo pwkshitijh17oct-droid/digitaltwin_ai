@@ -1,114 +1,121 @@
 """
-Global persistent sidebar for DigitalTwin.ai.
-Always accessible across all pages with simulation controls and navigation.
+DIGITALTWIN.AI — Permanent Sidebar & Simulation Controls Component
 """
 
 import streamlit as st
-from data.data_adapter import (
-    get_simulation_state, 
-    set_simulation_running, 
-    set_simulation_speed, 
-    reset_simulation,
-    step_simulation
-)
+import data.adapter as adapter
 
 def render_sidebar():
-    """Render the persistent global sidebar."""
     with st.sidebar:
-        # Brand & Header
-        st.markdown("""
-        <div class="dt-brand">
-            <div class="dt-logo-icon">DT</div>
-            <div>
-                <h1 class="dt-brand-title">DIGITALTWIN.AI</h1>
-                <div class="dt-brand-subtitle">Assembly Line Control Center</div>
+        # Brand Header
+        st.markdown(
+            """
+            <div class="dt-brand">
+                <div class="dt-logo-icon">DT</div>
+                <div>
+                    <div class="dt-brand-title">DIGITALTWIN.AI</div>
+                    <div class="dt-brand-subtitle">35-Station Assembly Line</div>
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
+            """,
+            unsafe_allow_html=True
+        )
+
         # Navigation
-        st.markdown("<p style='font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.1em; margin: 12px 0 6px 0;'>Navigation</p>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:11px; font-weight:700; color:#64748B; letter-spacing:0.08em; margin-bottom:8px;'>NAVIGATION</div>", unsafe_allow_html=True)
         
         pages = [
-            ("🏭 Overview", "Overview"),
-            ("⚠ Bottleneck Intelligence", "Bottleneck Intelligence"),
-            ("🧠 Quality Intelligence", "Quality Intelligence"),
-            ("📊 Analytics", "Analytics")
+            ("overview", "🏭 Overview"),
+            ("bottleneck", "⚠ Bottleneck Intelligence"),
+            ("quality", "🧠 Quality Intelligence"),
+            ("analytics", "📊 Analytics")
         ]
         
-        curr_page = st.session_state.get("current_page", "Overview")
+        active_page = st.session_state.get("active_page", "overview")
         
-        for label, page_key in pages:
-            is_active = (curr_page == page_key)
-            # Render a custom button styled for navigation
-            btn_type = "primary" if is_active else "secondary"
-            if st.button(label, key=f"nav_{page_key}", type=btn_type, use_container_width=True):
-                st.session_state.current_page = page_key
+        for key, label in pages:
+            is_active = (active_page == key)
+            button_style = "primary" if is_active else "secondary"
+            if st.button(label, key=f"nav_btn_{key}", use_container_width=True, type=button_style):
+                st.session_state["active_page"] = key
                 st.rerun()
 
-        st.markdown("<hr style='border-color: #1E293B; margin: 18px 0 14px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border-color:#1E293B; margin: 16px 0;'>", unsafe_allow_html=True)
         
         # Simulation Control Section
-        sim_state = get_simulation_state()
+        st.markdown("<div style='font-size:11px; font-weight:700; color:#64748B; letter-spacing:0.08em; margin-bottom:8px;'>SIMULATION CONTROL</div>", unsafe_allow_html=True)
         
-        st.markdown("<p style='font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;'>Simulation Control</p>", unsafe_allow_html=True)
+        sim_state = adapter.get_simulation_state()
+        status = sim_state["status"]
         
-        status_cls = sim_state["status_class"]
-        status_lbl = sim_state["status_label"]
-        dot_color = "green" if status_cls == "live" else ("yellow" if status_cls == "paused" else "grey")
-        
-        st.markdown(f"""
-        <div style="display: flex; align-items: center; justify-content: space-between; background: #111622; padding: 8px 12px; border-radius: 6px; border: 1px solid #1E293B; margin-bottom: 12px;">
-            <span style="font-size: 12px; color: #94A3B8; font-weight: 600;">Status:</span>
-            <div class="status-pill {status_cls}">
-                <span class="pulse-dot {dot_color}"></span>
-                {status_lbl}
+        # Status Pill
+        if status == "RUNNING":
+            pill_html = '<div class="status-pill live"><span class="pulse-dot green"></span> RUNNING</div>'
+        elif status == "PAUSED":
+            pill_html = '<div class="status-pill paused"><span class="pulse-dot yellow"></span> PAUSED</div>'
+        else:
+            pill_html = '<div class="status-pill stopped"><span class="pulse-dot grey"></span> READY</div>'
+            
+        st.markdown(
+            f"""
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; background:#111622; padding:8px 10px; border-radius:6px; border:1px solid #1E293B;">
+                <span style="font-size:11px; color:#94A3B8; font-weight:600;">Current state:</span>
+                {pill_html}
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Run / Pause / Reset Control Buttons
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Action Controls
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("▶️ Run", key="btn_sim_run", use_container_width=True):
-                set_simulation_running(True)
-                st.session_state.sim_running = True
+            if st.button("▶ RUN", key="ctrl_run", use_container_width=True, disabled=(status == "RUNNING")):
+                if status == "PAUSED":
+                    adapter.resume_simulation()
+                else:
+                    adapter.start_simulation()
                 st.rerun()
         with col2:
-            if st.button("⏸ Pause", key="btn_sim_pause", use_container_width=True):
-                set_simulation_running(False)
-                st.session_state.sim_running = False
+            if st.button("⏸ PAUSE", key="ctrl_pause", use_container_width=True, disabled=(status != "RUNNING")):
+                adapter.pause_simulation()
                 st.rerun()
         with col3:
-            if st.button("↻ Reset", key="btn_sim_reset", use_container_width=True):
-                reset_simulation()
-                st.session_state.sim_running = False
+            if st.button("↻ RESET", key="ctrl_reset", use_container_width=True):
+                adapter.reset_simulation()
                 st.rerun()
 
-        # Speed Multiplier
-        st.markdown("<p style='font-size: 11px; color: #94A3B8; margin: 12px 0 4px 0; font-weight: 600;'>Simulation Speed</p>", unsafe_allow_html=True)
-        speed_col1, speed_col2, speed_col3 = st.columns(3)
-        curr_speed = sim_state["speed"]
+        st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+
+        # Simulation Speed Control
+        st.markdown("<div style='font-size:11px; color:#94A3B8; font-weight:600; margin-bottom:4px;'>Simulation speed:</div>", unsafe_allow_html=True)
+        speed_opts = ["1×", "2×", "5×"]
+        curr_mult = st.session_state.get("speed_multiplier", "1×")
+        selected_speed = st.radio(
+            "Speed",
+            options=speed_opts,
+            index=speed_opts.index(curr_mult) if curr_mult in speed_opts else 0,
+            horizontal=True,
+            key="speed_radio",
+            label_visibility="collapsed"
+        )
         
-        with speed_col1:
-            if st.button("1x", key="spd_1x", type="primary" if curr_speed == 1 else "secondary", use_container_width=True):
-                set_simulation_speed(1)
-                st.rerun()
-        with speed_col2:
-            if st.button("2x", key="spd_2x", type="primary" if curr_speed == 2 else "secondary", use_container_width=True):
-                set_simulation_speed(2)
-                st.rerun()
-        with speed_col3:
-            if st.button("5x", key="spd_5x", type="primary" if curr_speed == 5 else "secondary", use_container_width=True):
-                set_simulation_speed(5)
-                st.rerun()
-                
-        # Mini system telemetry footer
-        st.markdown(f"""
-        <div style="margin-top: 24px; padding: 10px; background: #0B0E14; border: 1px solid #1E293B; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #64748B;">
-            <div>LINE: 35 STATIONS (ONLINE)</div>
-            <div>TICK: #{sim_state['tick']}</div>
-            <div>ADAPTER: MOCK DATA LAYER</div>
-            <div>LATENCY: 12ms</div>
-        </div>
-        """, unsafe_allow_html=True)
+        if selected_speed != curr_mult:
+            st.session_state["speed_multiplier"] = selected_speed
+            mult_val = float(selected_speed.replace("×", ""))
+            adapter.set_simulation_speed(mult_val)
+            st.rerun()
+
+        # Simulation Time Readout
+        sim_time_fmt = sim_state["simulation_time_formatted"]
+        sim_hours = round(sim_state["simulation_time_hours"], 2)
+        
+        st.markdown(
+            f"""
+            <div style="margin-top:14px; background:#0B0E14; border:1px solid #1E293B; border-radius:6px; padding:10px; font-family:'JetBrains Mono', monospace;">
+                <div style="font-size:10px; color:#64748B; text-transform:uppercase;">SIMULATION TIME</div>
+                <div style="font-size:14px; font-weight:700; color:#38BDF8; margin-top:2px;">{sim_time_fmt}</div>
+                <div style="font-size:10px; color:#94A3B8; margin-top:2px;">({sim_hours} sim hrs)</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )

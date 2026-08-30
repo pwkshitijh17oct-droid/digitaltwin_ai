@@ -1,9 +1,6 @@
-[client]
-showSidebarNavigation = false
+[browser]
+gatherUsageStats = false
 
-[theme]
-base = "dark"
-backgroundColor = "#0B0E14"
-secondaryBackgroundColor = "#121824"
-textColor = "#F8FAFC"
-primaryColor = "#38BDF8"
+[server]
+headless = false
+port = 8501

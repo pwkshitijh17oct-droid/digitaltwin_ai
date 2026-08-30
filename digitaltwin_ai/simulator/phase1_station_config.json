@@ -1,0 +1,1892 @@
+{
+  "simulation_config": {
+    "real_operation_years": 1,
+    "simulation_duration_hours": 1,
+    "time_compression": "1 real year = 1 simulation hour",
+    "station_count": 35,
+    "line_type": "sequential",
+    "random_abnormal_events": false,
+    "max_maintenance_events_per_station": 3,
+    "maintenance": {
+      "initial_health": 1.0,
+      "health_min": 0.0,
+      "default_threshold": 0.7,
+      "recovery_health_min": 0.94,
+      "recovery_health_max": 0.99,
+      "degradation_profiles": {
+        "slow_accelerating": {
+          "beta": 2.0
+        },
+        "moderate_accelerating": {
+          "beta": 1.5
+        },
+        "steady": {
+          "beta": 1.0
+        }
+      },
+      "maintenance_duration_minutes": [
+        10,
+        30
+      ],
+      "automatic_health_reset": true,
+      "manual_command": "HT <station_id>",
+      "manual_reset_effect": "health resets to 1.0 before threshold; creates operator intervention record"
+    },
+    "time_scale": {
+      "real_operation": "1 year",
+      "simulation_duration": "1 hour",
+      "simulation_hours_per_real_year": 1.0
+    },
+    "parameter_architecture": {
+      "architecture": "3-layer",
+      "layers": [
+        "common_parameters",
+        "family_parameters",
+        "station_specific_parameters"
+      ],
+      "rules": {
+        "humidity": [
+          "oven",
+          "painting"
+        ],
+        "equipment_vibration": "equipment_driven_only",
+        "measurement_error": "inspection_only",
+        "installation_time": "processing_stations_only",
+        "buffer_stations": "S10_and_S20_identical"
+      }
+    },
+    "queue_capacity_per_station": 10,
+    "bottleneck_definition": {
+      "queue_capacity": 10,
+      "warning_threshold": 10,
+      "prediction_target": "queue reaches capacity due to station processing capacity falling behind accepted arrivals",
+      "exclude_direct_maintenance_jump": true
+    },
+    "defect_model": {
+      "enabled": true,
+      "base_rate_per_process": 0.00025,
+      "max_probability": 0.08,
+      "fixture_drift_rate": 0.025,
+      "defect_causes": [
+        "PROCESS_PARAMETER_DRIFT",
+        "PART_INPUT_VARIATION",
+        "FIXTURE_ALIGNMENT_VARIATION",
+        "ENVIRONMENTAL_PROCESS_CONDITION"
+      ],
+      "health_is_not_direct_defect_cause": true,
+      "inspection_detection_probability": 0.9,
+      "defect_propagates_with_vehicle": true
+    }
+  },
+  "common_parameters": {
+    "ct": {
+      "unit": "min",
+      "description": "Actual cycle time"
+    },
+    "ctd": {
+      "unit": "min",
+      "description": "Cycle-time deviation from normal CT"
+    },
+    "queue_length": {
+      "unit": "vehicles",
+      "description": "Vehicles waiting before station"
+    },
+    "utilization": {
+      "unit": "%",
+      "description": "Station utilization"
+    },
+    "waiting_time": {
+      "unit": "min",
+      "description": "Vehicle waiting time"
+    },
+    "station_status": {
+      "values": [
+        "RUNNING",
+        "IDLE",
+        "BLOCKED",
+        "STARVED",
+        "DOWN",
+        "MAINTENANCE"
+      ]
+    }
+  },
+  "stations": [
+    {
+      "id": "S01",
+      "name": "Body Framing Weld 1",
+      "family": "welding",
+      "base_ct_min": 9.8,
+      "parameters": {
+        "weld_current": {
+          "target": 250,
+          "unit": "A",
+          "variation_pct": 2
+        },
+        "weld_time": {
+          "target": 1.0,
+          "unit": "s",
+          "variation_pct": 3
+        },
+        "temperature": {
+          "target": 720,
+          "unit": "C",
+          "variation_pct": 2
+        },
+        "equipment_vibration": {
+          "target": 1.5,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "slow_accelerating",
+        "initial_health": 0.756,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 257,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "weld_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1767
+    },
+    {
+      "id": "S02",
+      "name": "Body Framing Weld 2",
+      "family": "welding",
+      "base_ct_min": 9.9,
+      "parameters": {
+        "weld_current": {
+          "target": 255,
+          "unit": "A",
+          "variation_pct": 2
+        },
+        "weld_time": {
+          "target": 1.05,
+          "unit": "s",
+          "variation_pct": 3
+        },
+        "temperature": {
+          "target": 725,
+          "unit": "C",
+          "variation_pct": 2
+        },
+        "equipment_vibration": {
+          "target": 1.6,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "slow_accelerating",
+        "initial_health": 0.811,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 340,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "weld_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1667
+    },
+    {
+      "id": "S03",
+      "name": "Body Framing Weld 3",
+      "family": "welding",
+      "base_ct_min": 10.0,
+      "parameters": {
+        "weld_current": {
+          "target": 248,
+          "unit": "A",
+          "variation_pct": 2
+        },
+        "weld_time": {
+          "target": 1.02,
+          "unit": "s",
+          "variation_pct": 3
+        },
+        "alignment": {
+          "target": 0.5,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.5,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 2.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "slow_accelerating",
+        "initial_health": 0.934,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 271,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "weld_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1375
+    },
+    {
+      "id": "S04",
+      "name": "Body Framing Weld 4",
+      "family": "welding",
+      "base_ct_min": 10.1,
+      "parameters": {
+        "weld_current": {
+          "target": 252,
+          "unit": "A",
+          "variation_pct": 2
+        },
+        "weld_time": {
+          "target": 1.04,
+          "unit": "s",
+          "variation_pct": 3
+        },
+        "alignment": {
+          "target": 0.55,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.6,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 2.2
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "slow_accelerating",
+        "initial_health": 0.772,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 479,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "weld_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1098
+    },
+    {
+      "id": "S05",
+      "name": "Body Framing Weld 5",
+      "family": "welding",
+      "base_ct_min": 10.2,
+      "parameters": {
+        "weld_current": {
+          "target": 250,
+          "unit": "A",
+          "variation_pct": 2
+        },
+        "weld_time": {
+          "target": 1.06,
+          "unit": "s",
+          "variation_pct": 3
+        },
+        "alignment": {
+          "target": 0.5,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.7,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 2.2
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "slow_accelerating",
+        "initial_health": 0.758,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 416,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "weld_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1008
+    },
+    {
+      "id": "S06",
+      "name": "Roof/Body Weld",
+      "family": "welding",
+      "base_ct_min": 10.0,
+      "parameters": {
+        "weld_current": {
+          "target": 245,
+          "unit": "A",
+          "variation_pct": 2
+        },
+        "weld_time": {
+          "target": 1.03,
+          "unit": "s",
+          "variation_pct": 3
+        },
+        "alignment": {
+          "target": 0.55,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.5,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 2.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "slow_accelerating",
+        "initial_health": 0.805,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 247,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "weld_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1375
+    },
+    {
+      "id": "S07",
+      "name": "Closures Hanging",
+      "family": "mechanical_assembly",
+      "base_ct_min": 9.7,
+      "installation_time": {
+        "target": 4.8,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "torque": {
+          "target": 35,
+          "unit": "Nm",
+          "variation_pct": 3
+        },
+        "alignment": {
+          "target": 0.6,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.4,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.901,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 458,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.187
+    },
+    {
+      "id": "S08",
+      "name": "Geometry Laser Scanning",
+      "family": "inspection",
+      "base_ct_min": 8.5,
+      "parameters": {
+        "alignment": {
+          "target": 0.5,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "measurement_error": {
+          "target": 0.03,
+          "unit": "mm",
+          "variation_pct": 10
+        },
+        "installation_time": 0.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.8,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 487,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "inspection_fixture_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.4677
+    },
+    {
+      "id": "S09",
+      "name": "Body Buffing & Inspection",
+      "family": "inspection",
+      "base_ct_min": 8.8,
+      "parameters": {
+        "surface_defect_score": {
+          "target": 2.0,
+          "unit": "score",
+          "variation_pct": 10
+        },
+        "burr_count": {
+          "target": 1,
+          "unit": "count",
+          "variation_pct": 30
+        },
+        "inspection_score": {
+          "target": 97,
+          "unit": "score",
+          "variation_pct": 2
+        },
+        "installation_time": 0.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.855,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 479,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "inspection_fixture_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.4219
+    },
+    {
+      "id": "S10",
+      "name": "Buffer Station 1",
+      "family": "buffer",
+      "base_ct_min": 1.0,
+      "buffer_capacity": 10,
+      "parameters": {
+        "buffer_level": {
+          "target": 4,
+          "unit": "vehicles",
+          "variation_pct": 20
+        },
+        "conveyor_speed": {
+          "target": 1.0,
+          "unit": "m/s",
+          "variation_pct": 3
+        },
+        "transfer_time": {
+          "target": 0.8,
+          "unit": "min",
+          "variation_pct": 5
+        },
+        "occupancy": {
+          "target": 40,
+          "unit": "%",
+          "variation_pct": 10
+        },
+        "installation_time": 0.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.897,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 429,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": false,
+      "health_mechanism": "conveyor_drive_wear",
+      "health_ct_target_at_threshold_min": 1.0,
+      "health_ct_sensitivity": 0.0
+    },
+    {
+      "id": "S11",
+      "name": "Pre-treatment & Degreasing",
+      "family": "chemical_process",
+      "base_ct_min": 7.5,
+      "parameters": {
+        "flow_rate": {
+          "target": 120,
+          "unit": "L/min",
+          "variation_pct": 3
+        },
+        "ph": {
+          "target": 7.0,
+          "unit": "pH",
+          "variation_pct": 2
+        },
+        "bath_temperature": {
+          "target": 55,
+          "unit": "C",
+          "variation_pct": 2
+        },
+        "installation_time": 1.2
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.94,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 203,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "pump_filter_nozzle_fouling",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.569
+    },
+    {
+      "id": "S12",
+      "name": "E-Coat / ED Tank",
+      "family": "chemical_process",
+      "base_ct_min": 8.0,
+      "parameters": {
+        "bath_temperature": {
+          "target": 30,
+          "unit": "C",
+          "variation_pct": 2
+        },
+        "voltage": {
+          "target": 250,
+          "unit": "V",
+          "variation_pct": 2
+        },
+        "current": {
+          "target": 120,
+          "unit": "A",
+          "variation_pct": 3
+        },
+        "chemical_concentration": {
+          "target": 85,
+          "unit": "%",
+          "variation_pct": 3
+        },
+        "installation_time": 1.5
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.925,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 281,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "pump_filter_nozzle_fouling",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.4368
+    },
+    {
+      "id": "S13",
+      "name": "ED Baking Oven",
+      "family": "oven",
+      "base_ct_min": 12.0,
+      "parameters": {
+        "oven_temperature": {
+          "target": 180,
+          "unit": "C",
+          "variation_pct": 1
+        },
+        "airflow": {
+          "target": 100,
+          "unit": "%",
+          "variation_pct": 3
+        },
+        "humidity": {
+          "target": 45,
+          "unit": "%",
+          "variation_pct": 5
+        },
+        "cure_time": {
+          "target": 20,
+          "unit": "min",
+          "variation_pct": 3
+        },
+        "installation_time": 1.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.819,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 374,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "heating_element_fouling",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.05
+    },
+    {
+      "id": "S14",
+      "name": "Underbody Sealing / PVC",
+      "family": "chemical_process",
+      "base_ct_min": 9.0,
+      "parameters": {
+        "pvc_pressure": {
+          "target": 5,
+          "unit": "bar",
+          "variation_pct": 3
+        },
+        "flow_rate": {
+          "target": 25,
+          "unit": "L/min",
+          "variation_pct": 4
+        },
+        "temperature": {
+          "target": 35,
+          "unit": "C",
+          "variation_pct": 2
+        },
+        "seal_thickness": {
+          "target": 2.0,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "installation_time": 1.4
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.989,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 310,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "pump_filter_nozzle_fouling",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.3125
+    },
+    {
+      "id": "S15",
+      "name": "Primer Paint",
+      "family": "painting",
+      "base_ct_min": 10.0,
+      "parameters": {
+        "paint_pressure": {
+          "target": 3.0,
+          "unit": "bar",
+          "variation_pct": 3
+        },
+        "paint_flow": {
+          "target": 1.2,
+          "unit": "L/min",
+          "variation_pct": 4
+        },
+        "humidity": {
+          "target": 55,
+          "unit": "%",
+          "variation_pct": 5
+        },
+        "installation_time": 1.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.776,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 372,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "paint_nozzle_clogging",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.2409
+    },
+    {
+      "id": "S16",
+      "name": "Base Coat Paint",
+      "family": "painting",
+      "base_ct_min": 10.5,
+      "parameters": {
+        "paint_pressure": {
+          "target": 3.2,
+          "unit": "bar",
+          "variation_pct": 3
+        },
+        "paint_flow": {
+          "target": 1.3,
+          "unit": "L/min",
+          "variation_pct": 4
+        },
+        "humidity": {
+          "target": 55,
+          "unit": "%",
+          "variation_pct": 5
+        },
+        "installation_time": 1.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.774,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 394,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "paint_nozzle_clogging",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.187
+    },
+    {
+      "id": "S17",
+      "name": "Clear Coat Paint",
+      "family": "painting",
+      "base_ct_min": 10.2,
+      "parameters": {
+        "paint_pressure": {
+          "target": 3.1,
+          "unit": "bar",
+          "variation_pct": 3
+        },
+        "paint_flow": {
+          "target": 1.25,
+          "unit": "L/min",
+          "variation_pct": 4
+        },
+        "humidity": {
+          "target": 55,
+          "unit": "%",
+          "variation_pct": 5
+        },
+        "installation_time": 1.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.901,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 376,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "paint_nozzle_clogging",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.2188
+    },
+    {
+      "id": "S18",
+      "name": "Final Paint Baking Oven",
+      "family": "oven",
+      "base_ct_min": 12.0,
+      "parameters": {
+        "oven_temperature": {
+          "target": 180,
+          "unit": "C",
+          "variation_pct": 1
+        },
+        "airflow": {
+          "target": 100,
+          "unit": "%",
+          "variation_pct": 3
+        },
+        "humidity": {
+          "target": 45,
+          "unit": "%",
+          "variation_pct": 5
+        },
+        "cure_time": {
+          "target": 20,
+          "unit": "min",
+          "variation_pct": 3
+        },
+        "installation_time": 1.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.932,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 222,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "heating_element_fouling",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.05
+    },
+    {
+      "id": "S19",
+      "name": "Paint Quality Inspection",
+      "family": "inspection",
+      "base_ct_min": 7.0,
+      "parameters": {
+        "paint_thickness": {
+          "target": 90,
+          "unit": "um",
+          "variation_pct": 5
+        },
+        "surface_defect_score": {
+          "target": 2,
+          "unit": "score",
+          "variation_pct": 10
+        },
+        "color_deviation": {
+          "target": 1.0,
+          "unit": "DeltaE",
+          "variation_pct": 10
+        },
+        "inspection_score": {
+          "target": 96,
+          "unit": "score",
+          "variation_pct": 2
+        },
+        "measurement_error": {
+          "target": 0.5,
+          "unit": "unit",
+          "variation_pct": 10
+        },
+        "installation_time": 0.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.781,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 474,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "inspection_fixture_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.75
+    },
+    {
+      "id": "S20",
+      "name": "Buffer Station 2",
+      "family": "buffer",
+      "base_ct_min": 1.0,
+      "buffer_capacity": 10,
+      "parameters": {
+        "buffer_level": {
+          "target": 4,
+          "unit": "vehicles",
+          "variation_pct": 20
+        },
+        "conveyor_speed": {
+          "target": 1.0,
+          "unit": "m/s",
+          "variation_pct": 3
+        },
+        "transfer_time": {
+          "target": 0.8,
+          "unit": "min",
+          "variation_pct": 5
+        },
+        "occupancy": {
+          "target": 40,
+          "unit": "%",
+          "variation_pct": 10
+        },
+        "installation_time": 0.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.77,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 393,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": false,
+      "health_mechanism": "conveyor_drive_wear",
+      "health_ct_target_at_threshold_min": 1.0,
+      "health_ct_sensitivity": 0.0
+    },
+    {
+      "id": "S21",
+      "name": "Wire Harness Layout",
+      "family": "electrical_assembly",
+      "base_ct_min": 9.0,
+      "installation_time": {
+        "target": 5.0,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "routing_time": {
+          "target": 4.5,
+          "unit": "min",
+          "variation_pct": 5
+        },
+        "connector_force": {
+          "target": 35,
+          "unit": "N",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.3,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.5
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.957,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 350,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "crimping_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.3
+    },
+    {
+      "id": "S22",
+      "name": "Sound Proofing & Brake Lines",
+      "family": "mechanical_assembly",
+      "base_ct_min": 9.5,
+      "installation_time": {
+        "target": 4.5,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "torque": {
+          "target": 32,
+          "unit": "Nm",
+          "variation_pct": 3
+        },
+        "line_pressure": {
+          "target": 8,
+          "unit": "bar",
+          "variation_pct": 3
+        },
+        "equipment_vibration": {
+          "target": 1.5,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.5
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.894,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 385,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.2409
+    },
+    {
+      "id": "S23",
+      "name": "Cockpit Module Installation",
+      "family": "mechanical_assembly",
+      "base_ct_min": 10.0,
+      "installation_time": {
+        "target": 5.2,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "alignment": {
+          "target": 0.7,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "torque": {
+          "target": 38,
+          "unit": "Nm",
+          "variation_pct": 3
+        },
+        "equipment_vibration": {
+          "target": 1.6,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.761,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 235,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1568
+    },
+    {
+      "id": "S24",
+      "name": "Fuel Tank / Under-Car Components",
+      "family": "mechanical_assembly",
+      "base_ct_min": 10.2,
+      "installation_time": {
+        "target": 5.0,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "torque": {
+          "target": 42,
+          "unit": "Nm",
+          "variation_pct": 3
+        },
+        "alignment": {
+          "target": 0.65,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.7,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.943,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 316,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1375
+    },
+    {
+      "id": "S25",
+      "name": "Powertrain Marriage",
+      "family": "mechanical_assembly",
+      "base_ct_min": 11.0,
+      "installation_time": {
+        "target": 5.8,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "torque": {
+          "target": 50,
+          "unit": "Nm",
+          "variation_pct": 3
+        },
+        "torque_angle": {
+          "target": 90,
+          "unit": "degree",
+          "variation_pct": 2
+        },
+        "alignment": {
+          "target": 0.6,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.8,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 2.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 3,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.964,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 240,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.05
+    },
+    {
+      "id": "S26",
+      "name": "Fluid Filling",
+      "family": "fluid_filling",
+      "base_ct_min": 8.0,
+      "parameters": {
+        "fill_pressure": {
+          "target": 3.0,
+          "unit": "bar",
+          "variation_pct": 3
+        },
+        "flow_rate": {
+          "target": 20,
+          "unit": "L/min",
+          "variation_pct": 4
+        },
+        "fluid_level": {
+          "target": 100,
+          "unit": "%",
+          "variation_pct": 2
+        },
+        "fill_time": {
+          "target": 4.5,
+          "unit": "min",
+          "variation_pct": 4
+        },
+        "installation_time": 1.2
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.845,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 251,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "filling_nozzle_pump_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.4837
+    },
+    {
+      "id": "S27",
+      "name": "Windshield & Glass Glazing",
+      "family": "glazing",
+      "base_ct_min": 9.5,
+      "installation_time": {
+        "target": 5.0,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "adhesive_flow": {
+          "target": 0.8,
+          "unit": "L/min",
+          "variation_pct": 4
+        },
+        "adhesive_temperature": {
+          "target": 25,
+          "unit": "C",
+          "variation_pct": 2
+        },
+        "alignment": {
+          "target": 0.5,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "pressure": {
+          "target": 2.0,
+          "unit": "bar",
+          "variation_pct": 3
+        },
+        "installation_time": 1.5
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.909,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 432,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "adhesive_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.2409
+    },
+    {
+      "id": "S28",
+      "name": "Interior Trim & Carpet",
+      "family": "mechanical_assembly",
+      "base_ct_min": 9.5,
+      "installation_time": {
+        "target": 5.0,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "installation_force": {
+          "target": 120,
+          "unit": "N",
+          "variation_pct": 5
+        },
+        "alignment": {
+          "target": 0.7,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.4,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.791,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 386,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.208
+    },
+    {
+      "id": "S29",
+      "name": "Seat Installation",
+      "family": "mechanical_assembly",
+      "base_ct_min": 9.8,
+      "installation_time": {
+        "target": 5.2,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "torque": {
+          "target": 40,
+          "unit": "Nm",
+          "variation_pct": 3
+        },
+        "torque_angle": {
+          "target": 90,
+          "unit": "degree",
+          "variation_pct": 2
+        },
+        "equipment_vibration": {
+          "target": 1.5,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.802,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 381,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1767
+    },
+    {
+      "id": "S30",
+      "name": "Wheel & Tire Mounting",
+      "family": "mechanical_assembly",
+      "base_ct_min": 10.5,
+      "installation_time": {
+        "target": 5.8,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "torque": {
+          "target": 110,
+          "unit": "Nm",
+          "variation_pct": 3
+        },
+        "torque_angle": {
+          "target": 90,
+          "unit": "degree",
+          "variation_pct": 2
+        },
+        "equipment_vibration": {
+          "target": 1.8,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 3,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.925,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 336,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1098
+    },
+    {
+      "id": "S31",
+      "name": "Doors & Bumper Marriage",
+      "family": "mechanical_assembly",
+      "base_ct_min": 10.0,
+      "installation_time": {
+        "target": 5.2,
+        "unit": "min",
+        "variation_pct": 5
+      },
+      "parameters": {
+        "torque": {
+          "target": 38,
+          "unit": "Nm",
+          "variation_pct": 3
+        },
+        "gap": {
+          "target": 3.0,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "alignment": {
+          "target": 0.65,
+          "unit": "mm",
+          "variation_pct": 5
+        },
+        "equipment_vibration": {
+          "target": 1.5,
+          "unit": "mm/s",
+          "variation_pct": 8
+        },
+        "installation_time": 1.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.902,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "TOOL_REPLACEMENT",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 236,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": true,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "fixture_tool_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.1568
+    },
+    {
+      "id": "S32",
+      "name": "Wheel Alignment & Headlight Calibration",
+      "family": "inspection",
+      "base_ct_min": 8.0,
+      "parameters": {
+        "camber": {
+          "target": 0.0,
+          "unit": "degree",
+          "variation_pct": 20
+        },
+        "toe_angle": {
+          "target": 0.0,
+          "unit": "degree",
+          "variation_pct": 20
+        },
+        "headlight_angle": {
+          "target": 0.0,
+          "unit": "degree",
+          "variation_pct": 20
+        },
+        "alignment_error": {
+          "target": 0.1,
+          "unit": "degree",
+          "variation_pct": 10
+        },
+        "measurement_error": {
+          "target": 0.02,
+          "unit": "degree",
+          "variation_pct": 10
+        },
+        "installation_time": 1.0
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.884,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 287,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "inspection_fixture_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.5167
+    },
+    {
+      "id": "S33",
+      "name": "Dynamic Brake & Roll Test",
+      "family": "dynamic_testing",
+      "base_ct_min": 7.5,
+      "parameters": {
+        "brake_force": {
+          "target": 5000,
+          "unit": "N",
+          "variation_pct": 3
+        },
+        "wheel_speed": {
+          "target": 50,
+          "unit": "km/h",
+          "variation_pct": 2
+        },
+        "vibration": {
+          "target": 2.0,
+          "unit": "mm/s",
+          "variation_pct": 10
+        },
+        "obd_error_count": {
+          "target": 0,
+          "unit": "count",
+          "variation_pct": 0
+        },
+        "installation_time": 0.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 2,
+        "max_events": 3,
+        "degradation_profile": "moderate_accelerating",
+        "initial_health": 0.791,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 325,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "test_rig_actuator_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.6446
+    },
+    {
+      "id": "S34",
+      "name": "Monsoon Water Leak Test",
+      "family": "leak_testing",
+      "base_ct_min": 7.0,
+      "parameters": {
+        "water_pressure": {
+          "target": 2.5,
+          "unit": "bar",
+          "variation_pct": 3
+        },
+        "water_flow": {
+          "target": 15,
+          "unit": "L/min",
+          "variation_pct": 4
+        },
+        "leakage": {
+          "target": 0,
+          "unit": "mL/min",
+          "variation_pct": 0
+        },
+        "test_time": {
+          "target": 5.0,
+          "unit": "min",
+          "variation_pct": 3
+        },
+        "installation_time": 0.8
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.817,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 394,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "test_seal_fixture_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.75
+    },
+    {
+      "id": "S35",
+      "name": "Final Validation / Buyoff",
+      "family": "inspection",
+      "base_ct_min": 6.5,
+      "parameters": {
+        "inspection_score": {
+          "target": 98,
+          "unit": "score",
+          "variation_pct": 1
+        },
+        "defect_count": {
+          "target": 0,
+          "unit": "count",
+          "variation_pct": 0
+        },
+        "measurement_error": {
+          "target": 0.02,
+          "unit": "unit",
+          "variation_pct": 10
+        },
+        "validation_time": {
+          "target": 4.0,
+          "unit": "min",
+          "variation_pct": 5
+        },
+        "installation_time": 0.6
+      },
+      "maintenance": {
+        "planned_events_per_year": 1,
+        "max_events": 3,
+        "degradation_profile": "steady",
+        "initial_health": 0.805,
+        "maintenance_threshold": 0.7,
+        "recovery_health_min": 0.98,
+        "recovery_health_max": 1.0,
+        "maintenance_duration_min": 10.0,
+        "maintenance_duration_max": 30.0,
+        "maintenance_event_name": "PLANNED_SERVICE",
+        "maintenance_duration_unit": "production_minutes",
+        "tool_life_vehicles": 485,
+        "recovery_health": 0.98
+      },
+      "equipment_driven": false,
+      "installation_time_in_ct": true,
+      "queue_capacity": 10,
+      "health_enabled": true,
+      "health_mechanism": "inspection_fixture_wear",
+      "health_ct_target_at_threshold_min": 13.65,
+      "health_ct_sensitivity": 0.9225
+    }
+  ]
+}

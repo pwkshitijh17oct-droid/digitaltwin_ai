@@ -1,28 +1,27 @@
 """
-DigitalTwin.ai — Main Streamlit Application Entrypoint.
-Industrial Manufacturing Digital Twin Control Center.
+DIGITALTWIN.AI — Main Streamlit Application Entrypoint.
+35-Station Manufacturing Digital Twin Control Center.
 """
 
 import streamlit as st
-import time
+import data.adapter as adapter
 from config.styles import CUSTOM_CSS
 from components.sidebar import render_sidebar
-from data.data_adapter import get_simulation_state, step_simulation
 from views.overview import render_overview_page
 from views.bottleneck import render_bottleneck_page
 from views.quality import render_quality_page
 from views.analytics import render_analytics_page
 
-# Try importing streamlit-autorefresh if installed, else fallback to session state tick
+# Try importing streamlit-autorefresh if installed
 try:
     from streamlit_autorefresh import st_autorefresh
     HAS_AUTOREFRESH = True
 except ImportError:
     HAS_AUTOREFRESH = False
 
-# Page Configuration - Force Initial Sidebar State Expanded
+# Page Configuration
 st.set_page_config(
-    page_title="DigitalTwin.ai | Manufacturing Control Center",
+    page_title="DIGITALTWIN.AI | 35-Station Assembly Control Center",
     page_icon="🏭",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -32,40 +31,37 @@ st.set_page_config(
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # Session State Initialization
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "Overview"
+if "active_page" not in st.session_state:
+    st.session_state["active_page"] = "overview"
 
-if "selected_station_id" not in st.session_state:
-    st.session_state.selected_station_id = None
+if "selected_station" not in st.session_state:
+    st.session_state["selected_station"] = None
 
-if "selected_vehicle_id" not in st.session_state:
-    st.session_state.selected_vehicle_id = "V128"
+if "drawer_open" not in st.session_state:
+    st.session_state["drawer_open"] = False
 
-if "sim_running" not in st.session_state:
-    st.session_state.sim_running = True
+if "speed_multiplier" not in st.session_state:
+    st.session_state["speed_multiplier"] = "1×"
 
-# Simulation Live Tick Handling
-sim_state = get_simulation_state()
-if sim_state["running"]:
-    # Auto-refresh every 2000ms / speed
-    interval_ms = max(500, int(2000 / sim_state["speed"]))
+# Controlled Live Auto-Refresh (~1 Hz for smooth interaction)
+sim_state = adapter.get_simulation_state()
+if sim_state["status"] == "RUNNING":
     if HAS_AUTOREFRESH:
-        st_autorefresh(interval=interval_ms, key="sim_autorefresh_counter")
-    step_simulation()
+        st_autorefresh(interval=1000, key="dt_live_tick_autorefresh")
 
-# Render Global Sidebar
+# Render Permanent Left Sidebar & Simulation Controls
 render_sidebar()
 
 # Page Router
-curr_page = st.session_state.get("current_page", "Overview")
+curr_page = st.session_state.get("active_page", "overview")
 
-if curr_page == "Overview":
+if curr_page == "overview":
     render_overview_page()
-elif curr_page == "Bottleneck Intelligence":
+elif curr_page == "bottleneck":
     render_bottleneck_page()
-elif curr_page == "Quality Intelligence":
+elif curr_page == "quality":
     render_quality_page()
-elif curr_page == "Analytics":
+elif curr_page == "analytics":
     render_analytics_page()
 else:
     render_overview_page()

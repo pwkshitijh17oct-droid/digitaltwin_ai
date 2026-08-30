@@ -1,127 +1,210 @@
 """
-Station Detail Drawer / Panel for DigitalTwin.ai.
-Renders on the right side when a station is clicked while keeping the assembly line visible.
-Dynamically renders sensor/process parameters according to adapter specifications.
+DIGITALTWIN.AI — Right-Side Station Detail Drawer Component
+Displays operational metrics, equipment health, and dynamic sensor coverage.
 """
 
 import streamlit as st
-from data.data_adapter import get_station_data
+import data.adapter as adapter
 
 def render_station_drawer(station_id: str):
-    """Render detailed inspection drawer for the chosen station."""
-    st_data = get_station_data(station_id)
-    if not st_data:
-        st.warning(f"Station {station_id} telemetry not found.")
+    station = adapter.get_station_data(station_id)
+    if not station:
+        st.error(f"Station {station_id} not found.")
         return
 
-    status = st_data["status"]
-    status_color = "#10B981" if status == "NORMAL" else ("#F59E0B" if status == "WARNING" else "#EF4444")
+    sid = station["id"]
+    name = station["name"]
+    status = station["status"]
+    family = station["family"]
+    shop = station["shop"]
     
-    st.markdown(f"""
-    <div class="drawer-container">
-        <div class="drawer-header">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-                <h2 class="drawer-station-id">{st_data['id']}</h2>
-                <span style="background: {status_color}22; color: {status_color}; border: 1px solid {status_color}66; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace;">
-                    {status}
-                </span>
+    # Close button header
+    col_title, col_close = st.columns([4, 1])
+    with col_title:
+        st.markdown(f"<div style='font-size:20px; font-weight:800; color:#38BDF8; font-family:\"JetBrains Mono\", monospace;'>{sid}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-size:14px; font-weight:700; color:#F8FAFC;'>{name}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-size:11px; color:#64748B;'>Shop: {shop} | Family: {family}</div>", unsafe_allow_html=True)
+    with col_close:
+        if st.button("✖ Close", key="btn_close_drawer", use_container_width=True):
+            st.session_state["drawer_open"] = False
+            st.rerun()
+
+    st.markdown("<hr style='border-color:#1E293B; margin:10px 0;'>", unsafe_allow_html=True)
+
+    # Operational State Badge
+    state_color = "#10B981" if status == "RUNNING" else ("#F59E0B" if status in ("IDLE", "RECOVERY") else "#EF4444")
+    st.markdown(
+        f"""
+        <div style="background:#0B0E14; border:1px solid #1E293B; border-radius:6px; padding:10px; margin-bottom:12px;">
+            <div style="font-size:10px; color:#64748B; text-transform:uppercase;">OPERATIONAL STATE</div>
+            <div style="font-size:16px; font-weight:700; color:{state_color}; font-family:'JetBrains Mono', monospace; margin-top:2px;">
+                {status}
             </div>
-            <div class="drawer-station-name">{st_data['name']}</div>
-            <div style="font-size: 11px; color: #64748B;">Shop: {st_data['shop']} | Type: {st_data['category']}</div>
         </div>
-        
-        <!-- Process Information Grid -->
-        <p style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Process Information</p>
-        <div class="metric-grid">
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Operational Data
+    st.markdown("<div style='font-size:12px; font-weight:700; color:#94A3B8; margin-bottom:6px;'>PROCESS / OPERATIONAL DATA</div>", unsafe_allow_html=True)
+    
+    base_ct = station["base_cycle_time"]
+    curr_ct = station["current_cycle_time"]
+    slowdown = station["health_slowdown"]
+    q_len = station["queue_length"]
+    q_cap = station["queue_capacity"]
+    avg_wait = station["average_waiting_time"]
+    processed = station["vehicles_processed"]
+
+    mcol1, mcol2 = st.columns(2)
+    with mcol1:
+        st.markdown(
+            f"""
             <div class="metric-box">
-                <div class="metric-box-label">Cycle Time</div>
-                <div class="metric-box-val">{st_data['cycle_time']} <span style="font-size: 11px; color: #64748B;">min</span></div>
+                <div class="metric-box-label">Current Cycle Time</div>
+                <div class="metric-box-val">{curr_ct} min</div>
             </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f"""
+            <div class="metric-box" style="margin-top:6px;">
+                <div class="metric-box-label">Queue Length</div>
+                <div class="metric-box-val">{q_len} / {q_cap}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f"""
+            <div class="metric-box" style="margin-top:6px;">
+                <div class="metric-box-label">Vehicles Processed</div>
+                <div class="metric-box-val">{processed}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with mcol2:
+        st.markdown(
+            f"""
             <div class="metric-box">
-                <div class="metric-box-label">CT Deviation</div>
-                <div class="metric-box-val" style="color: {'#EF4444' if st_data['cycle_time_dev'] > 20 else ('#F59E0B' if st_data['cycle_time_dev'] > 10 else '#10B981')};">
-                    {'+' if st_data['cycle_time_dev'] > 0 else ''}{st_data['cycle_time_dev']}%
+                <div class="metric-box-label">Base Cycle Time</div>
+                <div class="metric-box-val">{base_ct} min</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f"""
+            <div class="metric-box" style="margin-top:6px;">
+                <div class="metric-box-label">CT Health Slowdown</div>
+                <div class="metric-box-val">+{slowdown} min</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f"""
+            <div class="metric-box" style="margin-top:6px;">
+                <div class="metric-box-label">Avg Waiting Time</div>
+                <div class="metric-box-val">{avg_wait} min</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown("<hr style='border-color:#1E293B; margin:12px 0;'>", unsafe_allow_html=True)
+
+    # Equipment Health & Maintenance
+    st.markdown("<div style='font-size:12px; font-weight:700; color:#94A3B8; margin-bottom:6px;'>EQUIPMENT HEALTH & MAINTENANCE</div>", unsafe_allow_html=True)
+    
+    if family == "buffer":
+        st.markdown(
+            """
+            <div style="background:#0B0E14; border:1px solid #1E293B; border-radius:6px; padding:10px; color:#64748B; font-size:12px;">
+                N/A — Buffer Station (No mechanical tool health modeled)
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        health_pct = station["equipment_health_pct"]
+        health_color = "#10B981" if health_pct >= 85.0 else ("#F59E0B" if health_pct >= 70.0 else "#EF4444")
+        tool_life = station["tool_life_vehicles"]
+        since_last = station["vehicles_since_last_replacement"]
+        auto_cnt = station["automatic_replacement_count"]
+        manual_cnt = station["manual_replacement_count"]
+
+        st.markdown(
+            f"""
+            <div style="background:#0B0E14; border:1px solid #1E293B; border-radius:6px; padding:10px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span style="font-size:11px; color:#94A3B8;">Health Status</span>
+                    <span style="font-size:14px; font-weight:700; color:{health_color}; font-family:'JetBrains Mono';">{health_pct}%</span>
+                </div>
+                <div style="background:#1E293B; height:6px; border-radius:3px; overflow:hidden;">
+                    <div style="background:{health_color}; width:{health_pct}%; height:100%;"></div>
+                </div>
+                <div style="font-size:10px; color:#64748B; margin-top:6px;">
+                    Tool life: {since_last} / {tool_life} vehicles processed
+                </div>
+                <div style="font-size:10px; color:#64748B;">
+                    Replacements: {auto_cnt} Auto | {manual_cnt} Manual Reset
                 </div>
             </div>
-            <div class="metric-box">
-                <div class="metric-box-label">Queue Length</div>
-                <div class="metric-box-val">{st_data['queue_length']} <span style="font-size: 11px; color: #64748B;">/ {st_data['buffer_capacity']}</span></div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-box-label">Utilization</div>
-                <div class="metric-box-val">{st_data['utilization']}%</div>
-            </div>
-        </div>
-        
-        <!-- Dynamic Sensor / Process Parameters -->
-        <p style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin: 12px 0 6px 0;">Live Process Parameters</p>
-        <div class="params-grid">
-    """, unsafe_allow_html=True)
-    
-    # Dynamically render parameters
-    params = st_data.get("parameters", [])
-    for p in params:
-        p_status = p.get("status", "NORMAL")
-        p_cls = "normal" if p_status == "NORMAL" else ("warning" if p_status == "WARNING" else "critical")
-        st.markdown(f"""
-        <div class="param-card">
-            <div>
-                <div class="param-name">{p['name']}</div>
-                <div class="param-val">{p['value']} <span style="font-size: 10px; color: #94A3B8;">{p['unit']}</span></div>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-                <span class="param-badge {p_cls}">{p_status}</span>
-                <span style="font-size: 9px; color: #64748B; font-family: monospace;">{p.get('nominal', '')}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Bottleneck Risk Card
-    b_risk = st_data.get("bottleneck_risk", 10.0)
-    b_level = st_data.get("bottleneck_level", "LOW")
-    b_card_cls = "high" if b_level == "CRITICAL" else ("med" if b_level == "WARNING" else "low")
-    
-    st.markdown(f"""
-    <div class="risk-card {b_card_cls}">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 11px; font-weight: 700; color: #CBD5E1;">BOTTLENECK PREDICTION</span>
-            <span style="font-size: 12px; font-weight: 800; font-family: monospace;">{b_risk}% ({b_level})</span>
-        </div>
-        <div style="font-size: 11px; color: #94A3B8; margin-top: 4px;">
-            Estimated time to critical threshold: <strong style="color: #F8FAFC;">{st_data.get('bottleneck_predicted_time', 'Stable')}</strong>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Quality Risk Card
-    q_risk = st_data.get("quality_risk", 5.0)
-    q_level = st_data.get("quality_level", "LOW")
-    q_card_cls = "high" if q_level == "HIGH" else ("med" if q_level == "MODERATE" else "low")
-    
-    st.markdown(f"""
-    <div class="risk-card {q_card_cls}">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 11px; font-weight: 700; color: #CBD5E1;">QUALITY DEFECT RISK</span>
-            <span style="font-size: 12px; font-weight: 800; font-family: monospace;">{q_risk}% ({q_level})</span>
-        </div>
-        <div style="font-size: 11px; color: #94A3B8; margin-top: 4px;">
-            Predicted issue: <strong style="color: #F8FAFC;">{st_data.get('predicted_defect', 'None')}</strong>
-        </div>
-    </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Action Buttons
-    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("📊 View Analytics", key="drawer_btn_analytics", use_container_width=True):
-            st.session_state.current_page = "Analytics"
-            st.session_state.analytics_station_filter = station_id
+            """,
+            unsafe_allow_html=True
+        )
+
+        if st.button("🔧 Trigger Operator Health Reset", key=f"btn_ht_reset_{sid}", use_container_width=True):
+            res = adapter.trigger_operator_health_reset(sid)
+            st.success(f"Health reset applied to {sid}: {res}")
             st.rerun()
-    with c2:
-        if st.button("✖ Close Drawer", key="drawer_btn_close", use_container_width=True):
-            st.session_state.selected_station_id = None
-            st.rerun()
+
+    st.markdown("<hr style='border-color:#1E293B; margin:12px 0;'>", unsafe_allow_html=True)
+
+    # Dynamic Sensor Coverage
+    st.markdown("<div style='font-size:12px; font-weight:700; color:#94A3B8; margin-bottom:6px;'>DYNAMIC SENSOR COVERAGE</div>", unsafe_allow_html=True)
+    
+    sensor_info = adapter.get_sensor_parameters(sid)
+    if sensor_info["has_sensor_coverage"]:
+        st.markdown(
+            """
+            <div class="status-pill live" style="margin-bottom:8px;">
+                ● SENSOR COVERAGE ACTIVE
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        params = sensor_info["parameters"]
+        if params:
+            scol1, scol2 = st.columns(2)
+            for idx, p in enumerate(params):
+                target_col = scol1 if idx % 2 == 0 else scol2
+                with target_col:
+                    st.markdown(
+                        f"""
+                        <div class="param-card">
+                            <div class="param-name">{p['name']}</div>
+                            <div class="param-val">{p['value']} <span style="font-size:10px; color:#64748B;">{p['unit']}</span></div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+        else:
+            st.markdown("<div style='font-size:11px; color:#64748B;'>No parameter values active.</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(
+            """
+            <div class="status-pill stopped" style="margin-bottom:8px;">
+                ○ SENSOR COVERAGE NOT AVAILABLE
+            </div>
+            <div style="background:#0B0E14; border:1px solid #1E293B; border-radius:6px; padding:10px; color:#94A3B8; font-size:11px;">
+                No IoT sensor coverage is configured for this station.<br>
+                Process and operational telemetry remains fully available.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
